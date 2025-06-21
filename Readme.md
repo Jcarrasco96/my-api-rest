@@ -8,13 +8,13 @@
 This project is a RESTful microframework written in **pure PHP**, designed for developing modern APIs in a simple, organized way without external dependencies. It includes dynamic controllers by convention, permission checking via attributes, access control, and request limits (`RateLimit`).
 
 ## 🚀 Features
-- ✅ Versioned Controllers
-- ✅ Dynamic Routing
-- ✅ Custom Attributes
-- ✅ Permission Checking and JWT Tokens
-- ✅ Request Limiting
-- ✅ Layer Separation
-- ✅ No External Dependencies
+✅ Versioned Controllers  
+✅ Dynamic Routing  
+✅ Custom Attributes  
+✅ Permission Checking and JWT Tokens  
+✅ Request Limiting  
+✅ Layer Separation  
+✅ No External Dependencies
 
 ## 📁 Project structure
 ```text
@@ -30,10 +30,10 @@ composer.json
 ```
 
 ## 🔧 Requirements
-- ✅ PHP >= 8.1
-- ✅ Apache or Nginx server (friendly URLs)
-- ✅ PDO extension enabled
-- ✅ File system access (for rate limiting)
+✅ PHP >=8.1  
+✅ Apache or Nginx server (friendly URLs)  
+✅ PDO extension enabled  
+✅ File system access (for rate limiting)  
 
 ## ⚙️ Example of use
 ```php
@@ -73,4 +73,5 @@ The URL automatically determines the controller (UserController) and method (act
       ]
     }
     ```
-   
+
+## 🪤 Pull requests are welcome
