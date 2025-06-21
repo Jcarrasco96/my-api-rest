@@ -1,8 +1,8 @@
 <?php
 
-namespace MAR\helpers;
+namespace MyApiRest\helpers;
 
-use MAR\core\MyApiRestApp;
+use MyApiRest\core\Application;
 
 class Utilities
 {
@@ -15,7 +15,7 @@ class Utilities
 
         $baseUrl = ($isHttps ? 'https' : 'http') . '://' . $_SERVER['SERVER_NAME'] . ($port == 80 ? '' : ":$port") . '/';
 
-        return $baseUrl . (MyApiRestApp::$config['folderName'] ? MyApiRestApp::$config['folderName'] . '/' : '') . $path;
+        return $baseUrl . (Application::$config['folderName'] ? Application::$config['folderName'] . '/' : '') . $path;
     }
 
     public static function fileTypes(string $path): string
@@ -70,7 +70,7 @@ class Utilities
         $size = filesize($fileLocation);
 
         if ($size == 0) {
-            die(MyApiRestApp::t('Zero byte file! Aborting download.'));
+            die(Application::t('Zero byte file! Aborting download.'));
         }
 
         if (isset($_SERVER['HTTP_RANGE'])) {

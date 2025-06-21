@@ -1,11 +1,11 @@
 {
-  "name": "jcarrasco96/mi-api-rest",
-  "description": "mi-api-rest",
+  "name": "jcarrasco96/my-api-rest",
+  "description": "my-api-rest",
   "type": "library",
   "version": "1.0.0-dev",
   "autoload": {
     "psr-4": {
-      "MAR\\": "./"
+      "MyApiRest\\": "./"
     }
   },
   "authors": [
@@ -16,14 +16,10 @@
   ],
   "require": {
     "php": ">=8.2",
-    "firebase/php-jwt": "^v6.10.0",
+    "ext-fileinfo": "*",
     "ext-json": "*",
-    "ext-openssl": "*",
-    "ext-mbstring": "*",
-    "ext-gd": "*",
     "ext-mysqli": "*",
-    "ramsey/uuid": "^4.7",
     "ext-pdo": "*",
-    "ext-fileinfo": "*"
+    "firebase/php-jwt": "^v6.10.0"
   }
 }

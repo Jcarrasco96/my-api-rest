@@ -1,6 +1,6 @@
 <?php
 
-namespace MAR\core;
+namespace MyApiRest\core;
 
 use PDO;
 use PDOException;
@@ -8,80 +8,72 @@ use PDOException;
 class Database
 {
 
-    public ?PDO $connection;
+    private static ?PDO $connection = null;
 
-    public function __construct()
+    public static function getConnection(): PDO
     {
-        $databaseConfig = MyApiRestApp::$config['db'];
+        if (!self::$connection) {
+            $databaseConfig = Application::$config['db'];
 
-        $config = $databaseConfig[$databaseConfig['driver']];
+            $config = $databaseConfig[$databaseConfig['driver']];
 
-        switch ($databaseConfig['driver']) {
-            case 'mysql':
-                $dsn = "mysql:host={$config['host']}:{$config['port']};dbname={$config['dbname']};charset={$config['charset']}";
-                $this->connection = new PDO($dsn, $config['user'], $config['password'], [PDO::ATTR_PERSISTENT => true]);
-                break;
+            switch ($databaseConfig['driver']) {
+                case 'mysql':
+                    $dsn = "mysql:host={$config['host']}:{$config['port']};dbname={$config['dbname']};charset={$config['charset']}";
+                    self::$connection = new PDO($dsn, $config['user'], $config['password'], [PDO::ATTR_PERSISTENT => true]);
+                    break;
 
-            case 'sqlsrv':
-                $dsn = "sqlsrv:Server={$config['host']}:{$config['port']};Database={$config['dbname']}";
-                $this->connection = new PDO($dsn, $config['user'], $config['password'], [PDO::ATTR_PERSISTENT => true]);
-                break;
+                case 'sqlsrv':
+                    $dsn = "sqlsrv:Server={$config['host']}:{$config['port']};Database={$config['dbname']}";
+                    self::$connection = new PDO($dsn, $config['user'], $config['password'], [PDO::ATTR_PERSISTENT => true]);
+                    break;
 
-            case 'pgsql':
-                $dsn = "pgsql:host={$config['host']};port={$config['port']};dbname={$config['dbname']};user={$config['user']};password={$config['password']}";
-                $this->connection = new PDO($dsn);
-                break;
+                case 'pgsql':
+                    $dsn = "pgsql:host={$config['host']};port={$config['port']};dbname={$config['dbname']};user={$config['user']};password={$config['password']}";
+                    self::$connection = new PDO($dsn);
+                    break;
 
-            case 'sqlite':
-                $dsn = "sqlite:{$config['path']}";
-                $this->connection = new PDO($dsn, null, null, [PDO::ATTR_PERSISTENT => true]);
-                break;
+                case 'sqlite':
+                    $dsn = "sqlite:{$config['path']}";
+                    self::$connection = new PDO($dsn, null, null, [PDO::ATTR_PERSISTENT => true]);
+                    break;
 
-            default:
-                throw new PDOException("Database connection error");
+                default:
+                    throw new PDOException("Database connection error");
+            }
+
+            self::$connection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         }
 
-        $this->connection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        return self::$connection;
     }
 
-    public function __destruct()
+    public static function findById(string $tableName, string $id): array
     {
-        if ($this->connection) {
-            $this->connection = null;
-        }
+        $stmt = self::getConnection()->prepare("SELECT * FROM `$tableName` WHERE id = :id;");
+        $stmt->bindValue(':id', $id);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
     }
 
-    public function findById(string $query, string $id): array
+    public static function findAll(string $tableName): array
     {
-        try {
-            $stmt = $this->connection->prepare($query);
-            $stmt->bindValue(':id', $id);
-            $stmt->execute();
-            return $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
-        } catch (PDOException) {
-            return [];
-        }
+        $stmt = self::getConnection()->query("SELECT * FROM `$tableName`;");
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function findAll(string $query): array
+    public static function delete(string $tableName, int $id): bool
     {
-        try {
-            $stmt = $this->connection->query($query);
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
-        } catch (PDOException) {
-            return [];
-        }
+        $stmt = self::getConnection()->prepare("DELETE FROM `$tableName` WHERE id = :id;");
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        return $stmt->execute();
     }
 
-    public function delete(string $query, int $id): bool
+    public static function tableColumns(string $tableName): array
     {
-        try {
-            $stmt = $this->connection->prepare($query);
-            $stmt->bindValue(':id', $id, PDO::PARAM_INT);
-            return $stmt->execute();
-        } catch (PDOException) {
-            return false;
-        }
+        $stmt = self::getConnection()->prepare("DESCRIBE `$tableName`;");
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
 }

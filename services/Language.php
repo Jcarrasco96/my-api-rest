@@ -1,8 +1,8 @@
 <?php
 
-namespace MAR\services;
+namespace MyApiRest\services;
 
-use MAR\core\MyApiRestApp;
+use MyApiRest\core\Application;
 
 class Language
 {
@@ -32,7 +32,7 @@ class Language
             return $translation;
         }
 
-        MyApiRestApp::$logger->warning("Language key: '$key' not found.");
+        Application::$logger->warning("Language key: '$key' not found.");
         return $key;
     }
 

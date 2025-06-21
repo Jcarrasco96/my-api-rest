@@ -1,15 +1,15 @@
 <?php
 
-namespace MAR\core;
+namespace MyApiRest\core;
 
-abstract class BaseModel
+abstract class Model
 {
 
     protected static string $tableName;
 
     public static function findById(string $uuid): array
     {
-        return MyApiRestApp::$database->findById("SELECT * FROM `" . static::$tableName . "` WHERE id = :id", $uuid);
+        return Database::findById(static::$tableName, $uuid);
     }
 
     abstract public static function create(array $data): bool|array;
@@ -18,12 +18,17 @@ abstract class BaseModel
 
     public static function findAll(): array
     {
-        return MyApiRestApp::$database->findAll("SELECT * FROM `" . static::$tableName . "`");
+        return Database::findAll(static::$tableName);
     }
 
     public static function delete($uuid): bool
     {
-        return MyApiRestApp::$database->delete("DELETE FROM `" . static::$tableName. "` WHERE id = :id", $uuid);
+        return Database::delete(static::$tableName, $uuid);
+    }
+
+    public static function tableColumns(): array
+    {
+        return Database::tableColumns(static::$tableName);
     }
 
 }

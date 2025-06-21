@@ -1,10 +1,10 @@
 <?php
 
-namespace MAR\models;
+namespace MyApiRest\models;
 
-use MAR\core\BaseModel;
+use MyApiRest\core\Model;
 
-abstract class UserIdentity extends BaseModel
+abstract class UserIdentity extends Model
 {
 
     protected static string $tableName = 'user';

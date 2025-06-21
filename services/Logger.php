@@ -1,6 +1,6 @@
 <?php
 
-namespace MAR\services;
+namespace MyApiRest\services;
 
 class Logger
 {

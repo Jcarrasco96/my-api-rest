@@ -1,6 +1,6 @@
 <?php
 
-namespace MAR\exception;
+namespace MyApiRest\core;
 
 use ErrorException;
 use JetBrains\PhpStorm\NoReturn;
@@ -15,24 +15,28 @@ class ExceptionHandler
             header('HTTP/1.1 503 Service Unavailable');
         }
 
-        $code = $th->getCode() == 0 ? 401 : $th->getCode();
+        $code = $th->getCode() == 0 || !is_int($th->getCode()) ? 401 : $th->getCode();
 
         http_response_code($code);
 
-        error_log(self::format($th));
+        $data = [
+            'status'  => $code,
+            'message' => $th->getMessage()
+        ];
 
         if (self::isJsonRequest()) {
             header('Content-Type: application/json; charset=utf-8');
-            echo json_encode([
-                'status'  => $code,
-                'message' => $th->getMessage(),
-                'file' => $th->getFile(),
-                'line' => $th->getLine()
-            ]);
+            echo json_encode($data);
         } else {
             echo "<h1>ERROR!!!</h1>";
             echo "<p>{$th->getMessage()}</p>";
         }
+
+        Application::$logger->error("ERROR " . json_encode([
+            ...$data,
+            'file' => $th->getFile() . '(' . $th->getLine() . ')',
+            'trace' => $th->getTraceAsString(),
+        ], JSON_PRETTY_PRINT));
     }
 
     public static function register(): void
@@ -53,17 +57,6 @@ class ExceptionHandler
         return str_contains($_SERVER['HTTP_ACCEPT'] ?? '', 'application/json')
             || (isset($_SERVER['CONTENT_TYPE']) && str_contains($_SERVER['CONTENT_TYPE'], 'application/json'))
             || isset($_GET['json']);
-    }
-
-    private static function format(Throwable $e): string
-    {
-        return sprintf("[%s] %s in %s:%d\nStack trace:\n%s\n",
-            date('Y-m-d H:i:s'),
-            $e->getMessage(),
-            $e->getFile(),
-            $e->getLine(),
-            $e->getTraceAsString()
-        );
     }
 
 }

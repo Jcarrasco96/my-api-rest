@@ -1,22 +1,33 @@
 <?php
 
-namespace MAR\core;
+namespace MyApiRest\core;
 
-use Exception;
-use MAR\attributes\ControllerMethod;
-use MAR\attributes\ControllerPermission;
-use MAR\attributes\RequireToken;
-use MAR\helpers\TokenValidator;
+use MyApiRest\attributes\ControllerMethod;
+use MyApiRest\attributes\ControllerPermission;
+use MyApiRest\exceptions\BadRequestHttpException;
+use MyApiRest\exceptions\ForbiddenHttpException;
+use MyApiRest\exceptions\MethodNotAllowedHttpException;
 use ReflectionException;
 use ReflectionMethod;
 
-abstract class BaseController
+abstract class Controller
 {
 
-    protected float $startTime;
+    protected array $data;
+
+    public function __construct()
+    {
+        $input = file_get_contents('php://input');
+
+        $data = json_decode($input, true);
+
+        $this->data = is_array($data) ? $data : [];
+    }
 
     /**
-     * @throws Exception
+     * @throws BadRequestHttpException
+     * @throws ForbiddenHttpException
+     * @throws MethodNotAllowedHttpException
      */
     protected function beforeAction(ReflectionMethod $method): void
     {
@@ -24,7 +35,7 @@ abstract class BaseController
 
         foreach ($method->getAttributes(ControllerMethod::class) as $attr) {
             if (!in_array($requestMethod, $attr->newInstance()->methods)) {
-                throw new Exception("Invalid request method $requestMethod.", 405);
+                throw new MethodNotAllowedHttpException("Invalid request method $requestMethod.");
             }
         }
 
@@ -44,11 +55,11 @@ abstract class BaseController
             return;
         }
 
-        throw new Exception(MyApiRestApp::t('You do not have permission to access this page.'), 403);
+        throw new ForbiddenHttpException(Application::t('You do not have permission to access this page.'));
     }
 
     /**
-     * @throws Exception
+     * @throws BadRequestHttpException
      */
     protected function checkSpecialPermissions(array &$permissions): bool
     {
@@ -78,13 +89,13 @@ abstract class BaseController
     }
 
     /**
+     * @throws MethodNotAllowedHttpException
+     * @throws ForbiddenHttpException
+     * @throws BadRequestHttpException
      * @throws ReflectionException
-     * @throws Exception
      */
-    public function createAction($methodName, $params = []): bool
+    public function createAction(string $methodName, array $params = []): void
     {
-        $this->startTime = microtime(true);
-
         $methodNameNormalized = $this->normalizeAction($methodName);
 
         if (method_exists($this, $methodNameNormalized)) {
@@ -93,47 +104,19 @@ abstract class BaseController
             if ($method->isPublic()) {
                 $this->beforeAction($method);
                 echo $method->invokeArgs($this, $params);
-                return true;
             }
         }
-
-        return false;
     }
 
-    /**
-     * @throws Exception
-     */
-    protected function asJson(array $params = []): string
-    {
-        if (isset($params["statusCode"])) {
-            http_response_code($params["statusCode"]);
-            unset($params["statusCode"]);
-        }
-
-        header('Content-Type: application/json; charset=utf-8');
-
-        $jsonResponse = json_encode($params, JSON_UNESCAPED_UNICODE | JSON_NUMERIC_CHECK);
-
-        if ($jsonResponse === false) {
-            throw new Exception(MyApiRestApp::t('Internal error on the server. Contact the administrator.'), 500);
-        }
-
-        return $jsonResponse;
-    }
-
-    private function normalizeAction($methodName): ?string
+    private function normalizeAction(string $methodName): string
     {
         $methodName = preg_replace_callback('/-([a-z])/', fn($m) => strtoupper($m[1]), strtolower($methodName));
         return 'action' . ucfirst($methodName);
     }
 
-    protected function jsonInput(): ?array
+    public function isPost(): bool
     {
-        $input = file_get_contents('php://input');
-
-        $data = json_decode($input, true);
-
-        return is_array($data) ? $data : null;
+        return strtoupper($_SERVER['REQUEST_METHOD']) === ControllerMethod::ROUTER_POST;
     }
 
 }

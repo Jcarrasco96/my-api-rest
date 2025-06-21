@@ -1,42 +1,43 @@
 <?php
 
-namespace MAR\services;
+namespace MyApiRest\services;
 
-use Exception;
-use MAR\core\MyApiRestApp;
+use MyApiRest\core\Application;
+use MyApiRest\exceptions\BadRequestHttpException;
 use Random\RandomException;
 
 class Security
 {
 
     /**
+     * @throws BadRequestHttpException
      * @throws RandomException
-     * @throws Exception
      */
     public static function generateRandomString(int $length = 32): string
     {
         if ($length < 1) {
-            throw new Exception(MyApiRestApp::t('First parameter ($length) must be greater than 0'));
+            throw new BadRequestHttpException(Application::t('First parameter ($length) must be greater than 0'));
         }
 
         return substr(self::base64UrlEncode(self::generateRandomKey($length)), 0, $length);
     }
 
     /**
+     * @throws BadRequestHttpException
      * @throws RandomException
-     * @throws Exception
      */
     public static function generateRandomKey(int $length = 32): string
     {
         if ($length < 1) {
-            throw new Exception(MyApiRestApp::t('First parameter ($length) must be greater than 0'));
+            throw new BadRequestHttpException(Application::t('First parameter ($length) must be greater than 0'));
         }
 
         return random_bytes($length);
     }
 
     /**
-     * @throws Exception
+     * @throws BadRequestHttpException
+     * @throws RandomException
      */
     public static function generatePasswordHash(string $password, int $cost = 13): string
     {
@@ -48,19 +49,19 @@ class Security
         $hash = crypt($password, $salt);
         // strlen() is safe since crypt() returns only ascii
         if (strlen($hash) !== 60) {
-            throw new Exception(MyApiRestApp::t('Unknown error occurred while generating hash.'));
+            throw new BadRequestHttpException(Application::t('Unknown error occurred while generating hash.'));
         }
 
         return $hash;
     }
 
     /**
-     * @throws Exception
+     * @throws BadRequestHttpException
      */
     public static function validatePassword(string $password, string $hash): bool
     {
         if (!preg_match('/^\$2[axy]\$(\d\d)\$[.\/0-9A-Za-z]{22}/', $hash, $matches) || $matches[1] < 4 || $matches[1] > 30) {
-            throw new Exception(MyApiRestApp::t('Hash is invalid.'));
+            throw new BadRequestHttpException(Application::t('Hash is invalid.'));
         }
 
         if (function_exists('password_verify')) {
@@ -77,13 +78,13 @@ class Security
     }
 
     /**
+     * @throws BadRequestHttpException
      * @throws RandomException
-     * @throws Exception
      */
     protected static function generateSalt(int $cost = 13): string
     {
         if ($cost < 4 || $cost > 31) {
-            throw new Exception(MyApiRestApp::t('Cost must be between 4 and 31.'));
+            throw new BadRequestHttpException(Application::t('Cost must be between 4 and 31.'));
         }
 
         // Get a 20-byte random string

@@ -1,13 +1,13 @@
 <?php
 
-namespace MAR\core;
+namespace MyApiRest\core;
 
 use JetBrains\PhpStorm\NoReturn;
-use MAR\helpers\Utilities;
-use MAR\services\Language;
-use MAR\services\Logger;
+use MyApiRest\helpers\Utilities;
+use MyApiRest\services\Language;
+use MyApiRest\services\Logger;
 
-class MyApiRestApp
+class Application
 {
 
     public static array $config = [
@@ -17,7 +17,6 @@ class MyApiRestApp
         'timezone' => 'America/Havana',
     ];
 
-    public static Database $database;
     public static Logger $logger;
     public static Language $language;
 
@@ -39,11 +38,6 @@ class MyApiRestApp
 
         date_default_timezone_set(self::$config['timezone']);
 
-        ignore_user_abort(true);
-        ini_set('display_errors', 0);
-        ini_set('error_log', APP_RUNTIME . 'logs' . DIRECTORY_SEPARATOR . 'error.log');
-
-        self::$database = new Database();
         self::$logger = new Logger(APP_RUNTIME . 'logs' . DIRECTORY_SEPARATOR . 'app.log');
         self::$language = new Language(self::$config['language']);
     }
@@ -93,7 +87,7 @@ class MyApiRestApp
 
         $execTime = number_format(microtime(true) - $this->time_start, 4);
 
-        self::$logger->notice("SCRIPT REAL EXECUTION TIME: $execTime, MEM PEAK USAGE: $mPeak, USAGE: $mUsage");
+        self::$logger->notice("SCRIPT REAL EXECUTION TIME: {$execTime}s, MEM PEAK USAGE: $mPeak, USAGE: $mUsage");
     }
 
 }

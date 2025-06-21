@@ -1,6 +1,6 @@
 <?php
 
-namespace MAR\attributes;
+namespace MyApiRest\attributes;
 
 use Attribute;
 
