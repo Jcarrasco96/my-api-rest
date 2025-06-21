@@ -2,7 +2,7 @@
   "name": "jcarrasco96/my-api-rest",
   "description": "my-api-rest",
   "type": "library",
-  "version": "1.0.0-dev",
+  "version": "1.0.1-dev",
   "autoload": {
     "psr-4": {
       "MyApiRest\\": "./"

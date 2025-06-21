@@ -26,6 +26,8 @@ class Application
     {
         $this->time_start = microtime(true);
 
+        ExceptionHandler::register();
+
         define('LIBRARY_ROOT', __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR);
         define('LIBRARY_LANGUAGES', LIBRARY_ROOT . 'languages' . DIRECTORY_SEPARATOR);
 
@@ -34,16 +36,29 @@ class Application
         define('APP_RUNTIME', ROOT . 'runtime' . DIRECTORY_SEPARATOR);
         define('APP_CONTROLLERS', ROOT . 'controllers' . DIRECTORY_SEPARATOR);
 
+        define('RATE_LIMIT_FOLDER', APP_RUNTIME . 'rate_limit' . DIRECTORY_SEPARATOR);
+        define('LOGS_FOLDER', APP_RUNTIME . 'logs' . DIRECTORY_SEPARATOR);
+
+        if (!is_dir(RATE_LIMIT_FOLDER)) {
+            mkdir(RATE_LIMIT_FOLDER, 0755, true);
+        }
+
+        if (!is_dir(LOGS_FOLDER)) {
+            mkdir(LOGS_FOLDER, 0755, true);
+        }
+
         self::$config = array_merge(self::$config, $config);
 
         date_default_timezone_set(self::$config['timezone']);
 
-        self::$logger = new Logger(APP_RUNTIME . 'logs' . DIRECTORY_SEPARATOR . 'app.log');
+        self::$logger = new Logger(LOGS_FOLDER . 'app.log');
         self::$language = new Language(self::$config['language']);
     }
 
     #[NoReturn] public function run(): void
     {
+        $this->beforeInit();
+
         $segments = explode('/', trim($_SERVER['PATH_INFO'] ?? '', '/'));
 
         if (empty($segments) || empty($segments[0])) {
@@ -88,6 +103,25 @@ class Application
         $execTime = number_format(microtime(true) - $this->time_start, 4);
 
         self::$logger->notice("SCRIPT REAL EXECUTION TIME: {$execTime}s, MEM PEAK USAGE: $mPeak, USAGE: $mUsage");
+    }
+
+    private function beforeInit(): void
+    {
+        $origin = $_SERVER['HTTP_ORIGIN'] ?? '*';
+
+        if (in_array($origin, Application::$config['origins'])) {
+            header("Access-Control-Allow-Origin: $origin");
+        }
+
+        $allowedHeaders = ['Content-Type', 'Authorization', 'X-CSRF-Token'];
+
+        header("Access-Control-Allow-Headers: " . implode(',', $allowedHeaders));
+        header("Access-Control-Allow-Credentials: true");
+        header("Access-Control-Max-Age: 3600");
+
+        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+            exit(0);
+        }
     }
 
 }

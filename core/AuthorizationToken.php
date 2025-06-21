@@ -7,7 +7,7 @@ use Firebase\JWT\Key;
 use MyApiRest\exceptions\BadRequestHttpException;
 use MyApiRest\models\UserIdentity;
 
-class TokenValidator
+class AuthorizationToken
 {
 
     /**
@@ -78,6 +78,8 @@ class TokenValidator
      * @throws BadRequestHttpException
      */
     public static function userHasAccess(array $userRoles): bool {
+        $userRoles = array_values(array_filter($userRoles, fn($v) => !in_array($v, ['*', '@', '?'])));
+
         foreach ($userRoles as $itemName) {
             if (self::checkAccess($itemName)) {
                 return true;

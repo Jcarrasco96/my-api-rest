@@ -7,11 +7,19 @@ use MyApiRest\core\Application;
 class Language
 {
 
-    private mixed $language;
+    private array $language;
 
     public function __construct(string $code = 'en')
     {
         $this->language = require_once LIBRARY_LANGUAGES . "$code.php";
+
+        if (is_file(ROOT . 'languages' . DIRECTORY_SEPARATOR . "$code.php")) {
+            $applicationLanguages = require_once ROOT . 'languages' . DIRECTORY_SEPARATOR . "$code.php";
+
+            if (is_array($applicationLanguages)) {
+                $this->language = array_merge($this->language, $applicationLanguages);
+            }
+        }
     }
 
     public function t(string $key, array $params = []): string
