@@ -12,7 +12,7 @@ class Application
 
     public static array $config = [
         'name' => 'MyApiRestApp',
-        'version' => '1.0.0-dev',
+        'version' => '1.0.2-dev',
         'language' => 'en',
         'timezone' => 'America/Havana',
     ];
