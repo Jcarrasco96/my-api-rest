@@ -1,11 +1,13 @@
 {
-  "name": "jcarrasco96/my-api-rest",
-  "description": "my-api-rest",
+  "name": "jcarrasco96/simple-api-rest",
+  "description": "PHP library for creating secure and simple REST APIs.",
   "type": "library",
-  "version": "1.0.3-dev",
+  "version": "1.0.4-dev",
+  "license": "AGPL-3.0-or-later",
+  "keywords": ["rest", "api", "php", "jwt", "framework"],
   "autoload": {
     "psr-4": {
-      "MyApiRest\\": "./"
+      "SimpleApiRest\\": "src/"
     }
   },
   "authors": [
@@ -18,7 +20,8 @@
     "php": ">=8.2",
     "ext-fileinfo": "*",
     "ext-json": "*",
-    "ext-mysqli": "*",
+    "ext-mbstring": "*",
+    "ext-openssl": "*",
     "ext-pdo": "*",
     "firebase/php-jwt": "^v6.10.0"
   }
