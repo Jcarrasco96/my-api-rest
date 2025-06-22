@@ -2,49 +2,37 @@
 
 namespace MyApiRest\core;
 
-use MyApiRest\exceptions\ServerErrorHttpException;
-
 class JsonResponse
 {
 
-    /**
-     * @throws ServerErrorHttpException
-     */
-    public static function response(string $message = '', array $data = []): string
+    public static function response(array $data): array
     {
-        $status = 'success';
-        $statusCode = 200;
+        $success = true;
 
-        if (isset($data["statusCode"])) {
-            http_response_code($data["statusCode"]);
+        if (isset($data["status"])) {
+            http_response_code($data["status"]);
 
-            if ($data['statusCode'] < 200 || $data['statusCode'] > 299) {
-                $status = 'error';
-                $statusCode = $data['statusCode'];
+            if ($data['status'] < 200 || $data['status'] > 299) {
+                $success = false;
             }
 
-            unset($data["statusCode"]);
+            unset($data["status"]);
         }
 
         header('Content-Type: application/json; charset=utf-8');
 
         $arr = [
-            'status' => $statusCode,
-            'message' => $message,
-            'statusStr' => $status,
+            'success' => $success,
+            'message' => $data['message'] ?? '',
         ];
+
+        unset($data['message']);
 
         if (!empty($data)) {
             $arr['data'] = $data;
         }
 
-        $jsonResponse = json_encode($arr, JSON_UNESCAPED_UNICODE | JSON_NUMERIC_CHECK);
-
-        if ($jsonResponse === false) {
-            throw new ServerErrorHttpException(Application::t('Internal error on the server. Contact the administrator.'));
-        }
-
-        return $jsonResponse;
+        return $arr;
     }
 
 }

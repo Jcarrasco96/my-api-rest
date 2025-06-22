@@ -17,26 +17,19 @@ class ExceptionHandler
 
         $code = $th->getCode() == 0 || !is_int($th->getCode()) ? 401 : $th->getCode();
 
-        http_response_code($code);
-
         $data = [
-            'status'  => $code,
-            'message' => $th->getMessage()
+            'message' => $th->getMessage(),
+            'status' => $code,
         ];
 
-        if (self::isJsonRequest()) {
-            header('Content-Type: application/json; charset=utf-8');
-            echo json_encode($data);
-        } else {
-            echo "<h1>ERROR!!!</h1>";
-            echo "<p>{$th->getMessage()}</p>";
+        if (APP_ENV === 'dev') {
+            $data['file'] = $th->getFile() . '(' . $th->getLine() . ')';
+            $data['trace'] = $th->getTraceAsString();
         }
 
-        Application::$logger->error("ERROR " . json_encode([
-            ...$data,
-            'file' => $th->getFile() . '(' . $th->getLine() . ')',
-            'trace' => $th->getTraceAsString(),
-        ], JSON_PRETTY_PRINT));
+        Application::$logger->error("ERROR " . json_encode($data, JSON_PRETTY_PRINT));
+
+        echo json_encode(JsonResponse::response($data), JSON_UNESCAPED_UNICODE | JSON_NUMERIC_CHECK);
     }
 
     public static function register(): void
@@ -50,13 +43,6 @@ class ExceptionHandler
      */
     public static function errorHandle(int $severity, string $message, string $file, int $line) {
         throw new ErrorException($message, 0, $severity, $file, $line);
-    }
-
-    private static function isJsonRequest(): bool
-    {
-        return str_contains($_SERVER['HTTP_ACCEPT'] ?? '', 'application/json')
-            || (isset($_SERVER['CONTENT_TYPE']) && str_contains($_SERVER['CONTENT_TYPE'], 'application/json'))
-            || isset($_GET['json']);
     }
 
 }

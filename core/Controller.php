@@ -113,12 +113,15 @@ abstract class Controller
     }
 
     /**
+     * @throws UnsupportedMediaTypeHttpException
      * @throws MethodNotAllowedHttpException
-     * @throws ForbiddenHttpException
+     * @throws RequestEntityTooLargeHttpException
      * @throws BadRequestHttpException
+     * @throws TooManyRequestsHttpException
      * @throws ReflectionException
+     * @throws ForbiddenHttpException
      */
-    public function createAction(string $methodName, array $params = []): void
+    public function createAction(string $methodName, array $params = []): array
     {
         $methodNameNormalized = $this->normalizeAction($methodName);
 
@@ -127,9 +130,13 @@ abstract class Controller
 
             if ($method->isPublic()) {
                 $this->beforeAction($method);
-                echo $method->invokeArgs($this, $params);
+                return $method->invokeArgs($this, $params);
             }
+
+            throw new BadRequestHttpException(Application::t('The requested method must be public.'));
         }
+
+        throw new BadRequestHttpException(Application::t('The requested method does not exist.'));
     }
 
     private function normalizeAction(string $methodName): string

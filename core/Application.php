@@ -3,6 +3,7 @@
 namespace MyApiRest\core;
 
 use JetBrains\PhpStorm\NoReturn;
+use MyApiRest\exceptions\BadRequestHttpException;
 use MyApiRest\helpers\Utilities;
 use MyApiRest\services\Language;
 use MyApiRest\services\Logger;
@@ -12,7 +13,7 @@ class Application
 
     public static array $config = [
         'name' => 'MyApiRestApp',
-        'version' => '1.0.2-dev',
+        'version' => '1.0.3-dev',
         'language' => 'en',
         'timezone' => 'America/Havana',
     ];
@@ -25,6 +26,8 @@ class Application
     public function __construct($config = [])
     {
         $this->time_start = microtime(true);
+
+        defined('APP_ENV') or define('APP_ENV', 'prod');
 
         ExceptionHandler::register();
 
@@ -55,16 +58,17 @@ class Application
         self::$language = new Language(self::$config['language']);
     }
 
+    /**
+     * @throws BadRequestHttpException
+     */
     #[NoReturn] public function run(): void
     {
         $this->beforeInit();
 
         $segments = explode('/', trim($_SERVER['PATH_INFO'] ?? '', '/'));
 
-        if (empty($segments) || empty($segments[0])) {
-            $segments[0] = 'v1';
-            $segments[1] = 'site';
-            $segments[2] = 'index';
+        if (empty($segments) || empty($segments[0]) || empty($segments[1]) || empty($segments[2])) {
+            throw new BadRequestHttpException('URL not found.');
         }
 
 //        $g = [];
@@ -84,10 +88,25 @@ class Application
 
         $controller_name = self::$config['controllerNamespace'] . $segments[0] . '\\' . ucfirst($segments[1]) . 'Controller';
 
-        (new $controller_name)->createAction($segments[2], array_slice($segments, 3));
+        $data = (new $controller_name)->createAction($segments[2], array_slice($segments, 3));
 
-        $this->dispose();
-        exit();
+        if (empty($data['message'])) {
+            throw new BadRequestHttpException('Message must be provided.');
+        }
+
+        $json = JsonResponse::response($data);
+
+        $execTime = number_format(microtime(true) - $this->time_start, 5);
+
+        if (APP_ENV === 'dev') {
+            $json = array_merge($json, [
+                'execTime' => $execTime,
+            ]);
+        }
+
+        echo json_encode($json, JSON_UNESCAPED_UNICODE | JSON_NUMERIC_CHECK);
+
+        $this->dispose($execTime);
     }
 
     public static function t(string $key, array $params = []): string
@@ -95,14 +114,12 @@ class Application
         return self::$language->t($key, $params);
     }
 
-    private function dispose(): void
+    private function dispose(float $execTime): void
     {
         $mPeak = Utilities::filesize(memory_get_peak_usage(true));
         $mUsage = Utilities::filesize(memory_get_usage(true));
 
-        $execTime = number_format(microtime(true) - $this->time_start, 4);
-
-        self::$logger->notice("SCRIPT REAL EXECUTION TIME: {$execTime}s, MEM PEAK USAGE: $mPeak, USAGE: $mUsage");
+        self::$logger->notice("SCRIPT REAL TIME EXECUTION: {$execTime}s, MEMORY PEAK USAGE: $mPeak, MEMORY USAGE: $mUsage");
     }
 
     private function beforeInit(): void

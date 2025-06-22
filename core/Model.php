@@ -2,33 +2,27 @@
 
 namespace MyApiRest\core;
 
+use MyApiRest\query\DeleteSafeQuery;
+
 abstract class Model
 {
 
     protected static string $tableName;
 
-    public static function findById(string $uuid): array
-    {
-        return Database::findById(static::$tableName, $uuid);
-    }
+    abstract public static function findById(string $uuid): array;
 
     abstract public static function create(array $data): bool|array;
 
     abstract public static function update(string $uuid, array $data): bool|array;
 
-    public static function findAll(): array
-    {
-        return Database::findAll(static::$tableName);
-    }
+    abstract public static function findAll(): array;
 
-    public static function delete($uuid): bool
+    public static function delete(string $uuid): bool
     {
-        return Database::delete(static::$tableName, $uuid);
-    }
-
-    public static function tableColumns(): array
-    {
-        return Database::tableColumns(static::$tableName);
+        return (new DeleteSafeQuery())
+            ->from(static::$tableName)
+            ->where('id', $uuid)
+            ->execute();
     }
 
 }

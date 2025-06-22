@@ -8,72 +8,64 @@ use PDOException;
 class Database
 {
 
-    private static ?PDO $connection = null;
+    private static ?PDO $pdo = null;
 
-    public static function getConnection(): PDO
+    public static function load(): PDO
     {
-        if (!self::$connection) {
+        if (!self::$pdo) {
             $databaseConfig = Application::$config['db'];
 
             $config = $databaseConfig[$databaseConfig['driver']];
 
             switch ($databaseConfig['driver']) {
                 case 'mysql':
-                    $dsn = "mysql:host={$config['host']}:{$config['port']};dbname={$config['dbname']};charset={$config['charset']}";
-                    self::$connection = new PDO($dsn, $config['user'], $config['password'], [PDO::ATTR_PERSISTENT => true]);
+                    self::loadMySqlDriver($config);
                     break;
 
                 case 'sqlsrv':
-                    $dsn = "sqlsrv:Server={$config['host']}:{$config['port']};Database={$config['dbname']}";
-                    self::$connection = new PDO($dsn, $config['user'], $config['password'], [PDO::ATTR_PERSISTENT => true]);
+                    self::loadSqlSrvDriver($config);
                     break;
 
                 case 'pgsql':
-                    $dsn = "pgsql:host={$config['host']};port={$config['port']};dbname={$config['dbname']};user={$config['user']};password={$config['password']}";
-                    self::$connection = new PDO($dsn);
+                    self::loadPgSqlDriver($config);
                     break;
 
                 case 'sqlite':
-                    $dsn = "sqlite:{$config['path']}";
-                    self::$connection = new PDO($dsn, null, null, [PDO::ATTR_PERSISTENT => true]);
+                    self::loadSqliteDriver($config);
                     break;
 
                 default:
                     throw new PDOException("Database connection error");
             }
 
-            self::$connection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            self::$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         }
 
-        return self::$connection;
+        return self::$pdo;
     }
 
-    public static function findById(string $tableName, string $id): array
+    private static function loadMySqlDriver(array $config): void
     {
-        $stmt = self::getConnection()->prepare("SELECT * FROM `$tableName` WHERE id = :id;");
-        $stmt->bindValue(':id', $id);
-        $stmt->execute();
-        return $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+        $dsn = "mysql:host={$config['host']}:{$config['port']};dbname={$config['dbname']};charset={$config['charset']}";
+        self::$pdo = new PDO($dsn, $config['user'], $config['password'], [PDO::ATTR_PERSISTENT => true]);
     }
 
-    public static function findAll(string $tableName): array
+    private static function loadSqlSrvDriver(array $config): void
     {
-        $stmt = self::getConnection()->query("SELECT * FROM `$tableName`;");
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $dsn = "sqlsrv:Server={$config['host']}:{$config['port']};Database={$config['dbname']}";
+        self::$pdo = new PDO($dsn, $config['user'], $config['password'], [PDO::ATTR_PERSISTENT => true]);
     }
 
-    public static function delete(string $tableName, int $id): bool
+    private static function loadPgSqlDriver(array $config): void
     {
-        $stmt = self::getConnection()->prepare("DELETE FROM `$tableName` WHERE id = :id;");
-        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
-        return $stmt->execute();
+        $dsn = "pgsql:host={$config['host']};port={$config['port']};dbname={$config['dbname']};user={$config['user']};password={$config['password']}";
+        self::$pdo = new PDO($dsn);
     }
 
-    public static function tableColumns(string $tableName): array
+    private static function loadSqliteDriver(array $config): void
     {
-        $stmt = self::getConnection()->prepare("DESCRIBE `$tableName`;");
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $dsn = "sqlite:{$config['path']}";
+        self::$pdo = new PDO($dsn, null, null, [PDO::ATTR_PERSISTENT => true]);
     }
 
 }

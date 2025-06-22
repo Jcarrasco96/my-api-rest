@@ -7,17 +7,6 @@ use MyApiRest\core\Application;
 class Utilities
 {
 
-    public static function urlTo(string $path): string
-    {
-        $isHttps = ($_SERVER['HTTPS'] ?? '') === 'on' || ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https' || ($_SERVER['x-forwarded-proto'] ?? '') === 'https';
-
-        $port = $_SERVER['SERVER_PORT'];
-
-        $baseUrl = ($isHttps ? 'https' : 'http') . '://' . $_SERVER['SERVER_NAME'] . ($port == 80 ? '' : ":$port") . '/';
-
-        return $baseUrl . (Application::$config['folderName'] ? Application::$config['folderName'] . '/' : '') . $path;
-    }
-
     public static function fileTypes(string $path): string
     {
         if (function_exists('mime_content_type')) {
@@ -39,7 +28,7 @@ class Utilities
         $units = ['bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
         $power = ($size > 0) ? floor(log($size, 1024)) : 0;
         $power = ($power > (count($units) - 1)) ? (count($units) - 1) : $power;
-        return sprintf('%s %s', round($size / pow(1024, $power), 2), $units[$power]);
+        return sprintf('%s %s', round($size / pow(1024, $power), 4), $units[$power]);
     }
 
     public static function download($fileLocation, $fileName, $maxSpeed = 100, $doStream = false): bool
