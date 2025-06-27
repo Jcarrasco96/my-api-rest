@@ -1,6 +1,6 @@
 <?php
 
-namespace SimpleApiRest\core;
+namespace SimpleApiRest\rest;
 
 use SimpleApiRest\query\DeleteSafeQuery;
 
@@ -9,7 +9,9 @@ abstract class Model
 
     protected static string $tableName;
 
-    abstract public static function findById(string $uuid): array;
+    protected array $attributes = [];
+
+    abstract public static function findById(string $uuid): self;
 
     abstract public static function create(array $data): bool|array;
 
@@ -23,6 +25,15 @@ abstract class Model
             ->from(static::$tableName)
             ->where('id', $uuid)
             ->execute();
+    }
+
+    public function __set(string $name, $value): void
+    {
+        if (isset($this->$name)) {
+            $this->$name = $value;
+        } else {
+            $this->attributes[$name] = $value;
+        }
     }
 
 }

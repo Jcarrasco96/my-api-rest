@@ -19,12 +19,14 @@ This project is a RESTful microframework written in **pure PHP**, designed for d
 ## 📁 Project structure
 ```text
 /attributes/
+/console/
 /core/
+/db/
 /exceptions/
-/helpers/
 /languages/
 /models/
-/services/
+/query/
+/rest/
 /validators/
 composer.json
 ```
@@ -38,8 +40,7 @@ composer.json
 ## ⚙️ Example of use
 ```php
 #[RateLimit(limit: 10, seconds: 60)]
-#[ControllerPermission(['?'])]
-#[ControllerMethod(['POST'])]
+#[Route('auth/login', [Route::ROUTER_POST])]
 public function actionLogin(): string
 {
     // Login logic and token generation
@@ -48,9 +49,9 @@ public function actionLogin(): string
 
 ## 📡 Example routes
 ```text
-GET  /v1/user/index
-POST /v1/user/create
-GET  /v1/product/view/5
+GET  /v1/user
+POST /v1/user
+GET  /v1/product/5
 ```
 The URL automatically determines the controller (UserController) and method (actionIndex, actionCreate, etc.).
 
@@ -63,15 +64,23 @@ The URL automatically determines the controller (UserController) and method (act
     ```json
     {
       "require": {
-        "jcarrasco96/my-api-rest": "1.0.*@dev"
+        "jcarrasco96/simple-api-rest": "1.0.*@dev"
       },
       "repositories": [
         {
           "type": "path",
-          "url": "path\\to\\my-api-rest"
+          "url": "path\\to\\my-api-rest\\src"
         }
       ]
     }
     ```
+3. In **index.php** of main application
+   ```php
+   require_once 'vendor/autoload.php';
+   
+   $config = require_once 'config/rest.php'; // config file
+   
+   (new Rest($config))->run();
+   ```
 
 ## 🪤 Pull requests are welcome

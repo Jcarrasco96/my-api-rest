@@ -1,8 +1,6 @@
 <?php
 
-namespace SimpleApiRest\services;
-
-use SimpleApiRest\core\Application;
+namespace SimpleApiRest\core;
 
 class Language
 {
@@ -40,7 +38,7 @@ class Language
             return $translation;
         }
 
-        Application::$logger->warning("Language key: '$key' not found.");
+        BaseApplication::$logger->warning("Language key: '$key' not found.");
         return $key;
     }
 

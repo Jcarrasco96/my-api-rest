@@ -1,10 +1,9 @@
 <?php
 
-namespace SimpleApiRest\services;
+namespace SimpleApiRest\core;
 
-use SimpleApiRest\core\Application;
-use SimpleApiRest\exceptions\BadRequestHttpException;
 use Random\RandomException;
+use SimpleApiRest\exceptions\BadRequestHttpException;
 
 class Security
 {
@@ -16,7 +15,7 @@ class Security
     public static function generateRandomString(int $length = 32): string
     {
         if ($length < 1) {
-            throw new BadRequestHttpException(Application::t('First parameter ($length) must be greater than 0'));
+            throw new BadRequestHttpException(BaseApplication::t('First parameter ($length) must be greater than 0'));
         }
 
         return substr(self::base64UrlEncode(self::generateRandomKey($length)), 0, $length);
@@ -29,7 +28,7 @@ class Security
     public static function generateRandomKey(int $length = 32): string
     {
         if ($length < 1) {
-            throw new BadRequestHttpException(Application::t('First parameter ($length) must be greater than 0'));
+            throw new BadRequestHttpException(BaseApplication::t('First parameter ($length) must be greater than 0'));
         }
 
         return random_bytes($length);
@@ -49,7 +48,7 @@ class Security
         $hash = crypt($password, $salt);
         // strlen() is safe since crypt() returns only ascii
         if (strlen($hash) !== 60) {
-            throw new BadRequestHttpException(Application::t('Unknown error occurred while generating hash.'));
+            throw new BadRequestHttpException(BaseApplication::t('Unknown error occurred while generating hash.'));
         }
 
         return $hash;
@@ -61,7 +60,7 @@ class Security
     public static function validatePassword(string $password, string $hash): bool
     {
         if (!preg_match('/^\$2[axy]\$(\d\d)\$[.\/0-9A-Za-z]{22}/', $hash, $matches) || $matches[1] < 4 || $matches[1] > 30) {
-            throw new BadRequestHttpException(Application::t('Hash is invalid.'));
+            throw new BadRequestHttpException(BaseApplication::t('Hash is invalid.'));
         }
 
         if (function_exists('password_verify')) {
@@ -84,7 +83,7 @@ class Security
     protected static function generateSalt(int $cost = 13): string
     {
         if ($cost < 4 || $cost > 31) {
-            throw new BadRequestHttpException(Application::t('Cost must be between 4 and 31.'));
+            throw new BadRequestHttpException(BaseApplication::t('Cost must be between 4 and 31.'));
         }
 
         // Get a 20-byte random string

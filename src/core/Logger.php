@@ -1,6 +1,6 @@
 <?php
 
-namespace SimpleApiRest\services;
+namespace SimpleApiRest\core;
 
 readonly class Logger
 {

@@ -13,8 +13,13 @@ class SelectSafeQuery extends SafeQuery
     private array $orderBy = [];
     private array $groupBy = [];
 
-    public function data(array $data): self
+    public function data(array $data = ['*']): self
     {
+        if (in_array('*', $data, true)) {
+            $this->data = ['*'];
+            return $this;
+        }
+
         foreach ($data as $col) {
             $this->validateIdentifier($col);
         }
@@ -57,7 +62,12 @@ class SelectSafeQuery extends SafeQuery
         $this->validateTable();
         $this->validateData();
 
-        $sql = "SELECT " . implode(', ', array_map(fn($c) => "`$c`", $this->data)) . " FROM `$this->table`";
+        $sql = 'SELECT ';
+        $sql .= $this->data === ['*']
+            ? '*'
+            : implode(', ', array_map(fn($col) => "`$col`", $this->data));
+        $sql .= " FROM `$this->table`";
+
         if ($this->where) {
             $sql .= " WHERE " . implode(" AND ", $this->where);
         }
@@ -89,6 +99,54 @@ class SelectSafeQuery extends SafeQuery
         $stmt->execute();
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function applyQueryParams(array $params): self
+    {
+        if (!empty($params['order'])) {
+            $orders = explode(',', $params['order']);
+            foreach ($orders as $order) {
+                [$column, $direction] = array_map('trim', explode(':', $order) + [1 => 'asc']);
+                $this->validateIdentifier($column);
+                $dir = strtolower($direction) === 'desc' ? 'DESC' : 'ASC';
+                $this->orderBy($column, $dir);
+            }
+        }
+
+        if (isset($params['page'])) {
+            if (!isset($params['limit'])) {
+                $params['limit'] = 10;
+            }
+
+            $page = max(1, (int)$params['page']);
+            $offset = (($params['limit'] ?? 10) * ($page - 1));
+            $this->offset((int)$offset);
+        }
+
+        if (isset($params['limit'])) {
+            $limit = $params['limit'];
+            $this->limit(max(1, min($limit, 100)));
+        }
+
+        return $this;
+    }
+
+    public function exists(): bool
+    {
+        $this->validateTable();
+
+        $sql = "SELECT 1 FROM `$this->table`";
+
+        if (!empty($this->where)) {
+            $sql .= ' WHERE ' . implode(' AND ', $this->where);
+        }
+
+        $sql .= ' LIMIT 1';
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($this->params);
+
+        return (bool) $stmt->fetchColumn();
     }
 
 }

@@ -1,9 +1,10 @@
 <?php
 
-namespace SimpleApiRest\core;
+namespace SimpleApiRest\db;
 
 use PDO;
 use PDOException;
+use SimpleApiRest\core\BaseApplication;
 
 class Database
 {
@@ -13,7 +14,7 @@ class Database
     public static function load(): PDO
     {
         if (!self::$pdo) {
-            $databaseConfig = Application::$config['db'];
+            $databaseConfig = BaseApplication::$config['db'];
 
             $config = $databaseConfig[$databaseConfig['driver']];
 

@@ -1,9 +1,10 @@
 <?php
 
-namespace SimpleApiRest\core;
+namespace SimpleApiRest\rest;
 
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
+use SimpleApiRest\core\BaseApplication;
 use SimpleApiRest\exceptions\BadRequestHttpException;
 use SimpleApiRest\models\UserIdentity;
 
@@ -17,7 +18,7 @@ class AuthorizationToken
     {
         $token = self::token();
 
-        $payload = JWT::decode($token, new Key(Application::$config['jwtSecretKey'], 'HS256'));
+        $payload = JWT::decode($token, new Key(BaseApplication::$config['jwtSecretKey'], 'HS256'));
 
         if (!isset($payload->_id) || !isset($payload->_username)) {
             throw new BadRequestHttpException("You must provide a valid token.");
@@ -42,14 +43,11 @@ class AuthorizationToken
     {
         $data = self::dataToken();
 
-        if (empty(Application::$config['userModel'])) {
+        if (empty(BaseApplication::$config['userModel'])) {
             throw new BadRequestHttpException("You must provide a valid User class.");
         }
 
-        $userModel = Application::$config['userModel'];
-        /** @var UserIdentity $userModel */
-
-        return $userModel::can($data['_id'], $itemName);
+        return UserIdentity::can($data['_id'], $itemName);
     }
 
     /**
@@ -71,7 +69,7 @@ class AuthorizationToken
         return JWT::encode([
             '_id' => $data['id'],
             '_username' =>  $data['username'],
-        ], Application::$config['jwtSecretKey'], 'HS256');
+        ], BaseApplication::$config['jwtSecretKey'], 'HS256');
     }
 
     /**
@@ -91,12 +89,11 @@ class AuthorizationToken
     /**
      * @throws BadRequestHttpException
      */
-    public static function userToken(): array
+    public static function userToken(): UserIdentity
     {
         $data = self::dataToken();
 
-        $userModel = Application::$config['userModel'];
-        /** @var UserIdentity $userModel */
+        $userModel = BaseApplication::$config['userModel'];
 
         return $userModel::findById($data['_id']);
     }

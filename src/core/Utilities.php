@@ -1,8 +1,7 @@
 <?php
 
-namespace SimpleApiRest\helpers;
+namespace SimpleApiRest\core;
 
-use SimpleApiRest\core\Application;
 use SimpleApiRest\exceptions\BadRequestHttpException;
 
 class Utilities
@@ -59,12 +58,13 @@ class Utilities
         header("Content-Disposition: $contentDisposition; filename=\"$fileName\"");
         header("Accept-Ranges: bytes");
 
-        $range = 0;
         $size = filesize($fileLocation);
 
         if ($size == 0) {
-            throw new BadRequestHttpException(Application::t('Zero byte file! Aborting download.'));
+            throw new BadRequestHttpException(BaseApplication::t('Zero byte file! Aborting download.'));
         }
+
+        $range = 0;
 
         if (isset($_SERVER['HTTP_RANGE'])) {
             list(, $range) = explode("=", $_SERVER['HTTP_RANGE']);

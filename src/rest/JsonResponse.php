@@ -1,6 +1,6 @@
 <?php
 
-namespace SimpleApiRest\core;
+namespace SimpleApiRest\rest;
 
 class JsonResponse
 {
