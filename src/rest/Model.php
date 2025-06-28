@@ -13,9 +13,9 @@ abstract class Model
 
     abstract public static function findById(string $uuid): self;
 
-    abstract public static function create(array $data): bool|array;
+    abstract public static function create(array $data): false|self;
 
-    abstract public static function update(string $uuid, array $data): bool|array;
+    abstract public static function update(string $uuid, array $data): false|self;
 
     abstract public static function findAll(): array;
 

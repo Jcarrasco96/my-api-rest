@@ -9,7 +9,7 @@ abstract class BaseApplication
 
     public static array $config = [
         'name' => 'SimpleApiRestApp',
-        'version' => '1.0.5-dev',
+        'version' => '1.0.6-dev',
         'language' => 'en',
         'timezone' => 'America/Havana',
     ];

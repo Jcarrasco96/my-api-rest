@@ -34,27 +34,42 @@ class CLI extends BaseApplication
             case 'g':
             case 'generate':
                 $generate = $argv[1] ?? null;
-                $override = isset($argv[2]) && $argv[2] === '-fc';
+                $override = isset($argv[3]) && $argv[3] === '-fc';
 
                 switch ($generate) {
                     case 'm':
                     case 'models':
-                        CLIModel::generate($override);
+                        if (!isset($argv[2])) {
+                            echo self::clog('Missing table name.', 'r') . PHP_EOL;
+                            break;
+                        }
+
+                        CLIModel::generate($argv[2], $override);
                         break;
 
                     case 'r':
                     case 'repositories':
-                        CLIRepository::generate($override);
+                        if (!isset($argv[2])) {
+                            echo self::clog('Missing table name.', 'r') . PHP_EOL;
+                            break;
+                        }
+
+                        CLIRepository::generate($argv[2], $override);
                         break;
 
                     case 'c':
                     case 'controllers':
-                        CLIController::generate($override);
+                        if (!isset($argv[2])) {
+                            echo self::clog('Missing table name.', 'r') . PHP_EOL;
+                            break;
+                        }
+
+                        CLIController::generate($argv[2], $override);
                         break;
 
                     default:
                         echo self::clog("UNKNOWN COMMAND g $generate", 'r') . PHP_EOL;
-                        exit(1);
+                        break;
                 }
                 break;
 

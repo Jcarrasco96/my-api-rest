@@ -5,7 +5,7 @@ namespace SimpleApiRest\console;
 abstract class BaseCLI
 {
 
-    abstract public static function generate(bool $override): void;
+    abstract public static function generate(string $table, bool $override): void;
 
     protected static function camelCase(string $string): string
     {

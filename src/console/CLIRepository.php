@@ -8,7 +8,7 @@ use SimpleApiRest\db\Database;
 class CLIRepository extends BaseCLI
 {
 
-    public static function generate(bool $override): void
+    public static function generate(string $table, bool $override): void
     {
         echo PHP_EOL . CLI::clog("GENERATING REPOSITORIES", 'g') . PHP_EOL;
 
@@ -18,47 +18,42 @@ class CLIRepository extends BaseCLI
 
         $pdo = Database::load();
 
-        $query = $pdo->query("SHOW TABLES;");
-        $tables = $query->fetchAll(PDO::FETCH_COLUMN);
-
         $repositoryNamespace = CLI::$config['repositoryNamespace'];
 
-        foreach ($tables as $table) {
-            $repositoryName = ucfirst(self::camelCase($table)) . 'Repository';
+        $repositoryName = ucfirst(self::camelCase($table)) . 'Repository';
 
-            $existFile = file_exists(APP_REPOSITORY_FOLDER . "$repositoryName.php");
+        $existFile = file_exists(APP_REPOSITORY_FOLDER . "$repositoryName.php");
 
-            if ($existFile && !$override) {
-                echo PHP_TAB . "Repository " . CLI::clog($repositoryName, 'y') . " already exists!" . PHP_EOL;
-                continue;
-            }
-
-            $columnsQuery = $pdo->query("DESCRIBE $table;");
-            $columns = $columnsQuery->fetchAll(PDO::FETCH_ASSOC);
-            $filteredColumns = array_filter($columns, fn($col) => $col['Field'] !== 'id');
-
-            $repositoryContent = "<?php" . PHP_EOL . PHP_EOL;
-            $repositoryContent .= "namespace $repositoryNamespace;" . PHP_EOL . PHP_EOL;
-            $repositoryContent .= "use SimpleApiRest\\core\\Database;" . PHP_EOL;
-            $repositoryContent .= "use PDO;" . PHP_EOL;
-            $repositoryContent .= "use Ramsey\Uuid\Uuid;" . PHP_EOL;
-            $repositoryContent .= PHP_EOL;
-            $repositoryContent .= "class $repositoryName {" . PHP_EOL . PHP_EOL;
-            $repositoryContent .= PHP_TAB . "private PDO \$pdo;" . PHP_EOL . PHP_EOL;
-            $repositoryContent .= PHP_TAB . "public function __construct() {" . PHP_EOL;
-            $repositoryContent .= PHP_TAB . PHP_TAB . "\$this->pdo = Database::load();" . PHP_EOL;
-            $repositoryContent .= PHP_TAB . "}" . PHP_EOL . PHP_EOL;
-            $repositoryContent .= self::generateCreateMethod($table, $filteredColumns);
-//            $repositoryContent .= self::generateRelationshipMethods($pdo, $table);
-            $repositoryContent .= self::generateFindByIdMethod($table);
-            $repositoryContent .= self::generateFindAllMethod($table);
-            $repositoryContent .= self::generateUpdateMethod($table, $filteredColumns);
-            $repositoryContent .= self::generateDeleteMethod($table);
-            $repositoryContent .= "}" . PHP_EOL;
-
-            file_put_contents(APP_REPOSITORY_FOLDER . "$repositoryName.php", $repositoryContent);
-            echo PHP_TAB . "Repository " . CLI::clog($repositoryName, 'c') . " generated successfully!" . PHP_EOL;
+        if ($existFile && !$override) {
+            echo PHP_TAB . "Repository " . CLI::clog($repositoryName, 'y') . " already exists!" . PHP_EOL;
+            return;
         }
+
+        $columnsQuery = $pdo->query("DESCRIBE $table;");
+        $columns = $columnsQuery->fetchAll(PDO::FETCH_ASSOC);
+        $filteredColumns = array_filter($columns, fn($col) => $col['Field'] !== 'id');
+
+        $repositoryContent = "<?php" . PHP_EOL . PHP_EOL;
+        $repositoryContent .= "namespace $repositoryNamespace;" . PHP_EOL . PHP_EOL;
+        $repositoryContent .= "use SimpleApiRest\\db\\Database;" . PHP_EOL;
+        $repositoryContent .= "use PDO;" . PHP_EOL;
+        $repositoryContent .= "use Ramsey\Uuid\Uuid;" . PHP_EOL;
+        $repositoryContent .= PHP_EOL;
+        $repositoryContent .= "class $repositoryName {" . PHP_EOL . PHP_EOL;
+        $repositoryContent .= PHP_TAB . "private PDO \$pdo;" . PHP_EOL . PHP_EOL;
+        $repositoryContent .= PHP_TAB . "public function __construct() {" . PHP_EOL;
+        $repositoryContent .= PHP_TAB . PHP_TAB . "\$this->pdo = Database::load();" . PHP_EOL;
+        $repositoryContent .= PHP_TAB . "}" . PHP_EOL . PHP_EOL;
+        $repositoryContent .= self::generateCreateMethod($table, $filteredColumns);
+//            $repositoryContent .= self::generateRelationshipMethods($pdo, $table);
+        $repositoryContent .= self::generateFindByIdMethod($table);
+        $repositoryContent .= self::generateFindAllMethod($table);
+        $repositoryContent .= self::generateUpdateMethod($table, $filteredColumns);
+        $repositoryContent .= self::generateDeleteMethod($table);
+        $repositoryContent .= "}" . PHP_EOL;
+
+        file_put_contents(APP_REPOSITORY_FOLDER . "$repositoryName.php", $repositoryContent);
+        echo PHP_TAB . "Repository " . CLI::clog($repositoryName, 'c') . " generated successfully!" . PHP_EOL;
     }
 
     private static function generateRelationshipMethods(PDO $pdo, string $table): string

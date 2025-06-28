@@ -2,7 +2,7 @@
   "name": "jcarrasco96/simple-api-rest",
   "description": "PHP library for creating secure and simple REST APIs.",
   "type": "library",
-  "version": "1.0.5-dev",
+  "version": "1.0.6-dev",
   "license": "AGPL-3.0-or-later",
   "keywords": ["rest", "api", "php", "jwt", "framework"],
   "autoload": {
