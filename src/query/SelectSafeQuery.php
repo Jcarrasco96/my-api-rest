@@ -4,6 +4,7 @@ namespace SimpleApiRest\query;
 
 use InvalidArgumentException;
 use PDO;
+use SimpleApiRest\core\BaseApplication;
 
 class SelectSafeQuery extends SafeQuery
 {
@@ -147,6 +148,64 @@ class SelectSafeQuery extends SafeQuery
         $stmt->execute($this->params);
 
         return (bool) $stmt->fetchColumn();
+    }
+
+    public function count(): int
+    {
+        $this->validateTable();
+
+        $sql = "SELECT COUNT(*) FROM `$this->table`";
+
+        if (!empty($this->where)) {
+            $sql .= ' WHERE ' . implode(' AND ', $this->where);
+        }
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($this->params);
+
+        return (int) $stmt->fetchColumn();
+    }
+
+    public function prepareSQL(bool $bindParams = false): string
+    {
+        $this->validateTable();
+        $this->validateData();
+
+        $sql = 'SELECT ';
+        $sql .= $this->data === ['*']
+            ? '*'
+            : implode(', ', array_map(fn($col) => "`$col`", $this->data));
+        $sql .= " FROM `$this->table`";
+
+        if ($this->where) {
+            $sql .= " WHERE " . implode(" AND ", $this->where);
+        }
+        if (!empty($this->groupBy)) {
+            $sql .= " GROUP BY " . implode(', ', $this->groupBy);
+        }
+        if (!empty($this->orderBy)) {
+            $sql .= " ORDER BY " . implode(', ', $this->orderBy);
+        }
+        if ($this->limit !== null) {
+            $sql .= " LIMIT :__limit";
+            $this->params[':__limit'] = $this->limit;
+        }
+        if ($this->offset !== null) {
+            $sql .= " OFFSET :__offset";
+            $this->params[':__offset'] = $this->offset;
+        }
+
+        if ($bindParams) {
+            foreach ($this->params as $key => $val) {
+                if (in_array($key, [':__offset', ':__limit'])) {
+                    $sql = str_replace($key, $val, $sql);
+                } else {
+                    $sql = str_replace($key, '"$val"', $sql);
+                }
+            }
+        }
+
+        return $sql;
     }
 
 }

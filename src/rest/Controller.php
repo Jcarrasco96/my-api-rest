@@ -53,6 +53,10 @@ abstract class Controller
      */
     protected function checkSpecialPermissions(array $permissions): bool
     {
+        if (in_array('*', $permissions)) {
+            return true;
+        }
+
         if (in_array('?', $permissions)) {
             $headers = array_change_key_case(getallheaders());
 
@@ -61,12 +65,8 @@ abstract class Controller
             }
         }
 
-        if (in_array('*', $permissions)) {
-            return true;
-        }
-
         if (in_array('@', $permissions)) {
-            $token = AuthorizationToken::token();
+            $token = AuthorizationToken::dataToken();
 
             if (!empty($token)) {
                 return true;

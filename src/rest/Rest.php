@@ -4,12 +4,14 @@ namespace SimpleApiRest\rest;
 
 use JetBrains\PhpStorm\NoReturn;
 use ReflectionException;
+use SimpleApiRest\core\Antibots;
 use SimpleApiRest\core\BaseApplication;
 use SimpleApiRest\core\Utilities;
 use SimpleApiRest\exceptions\BadRequestHttpException;
 use SimpleApiRest\exceptions\MethodNotAllowedHttpException;
 use SimpleApiRest\exceptions\RequestEntityTooLargeHttpException;
 use SimpleApiRest\exceptions\ServerErrorHttpException;
+use SimpleApiRest\exceptions\UnauthorizedHttpException;
 use SimpleApiRest\exceptions\UnsupportedMediaTypeHttpException;
 
 class Rest extends BaseApplication
@@ -40,6 +42,7 @@ class Rest extends BaseApplication
      * @throws RequestEntityTooLargeHttpException
      * @throws MethodNotAllowedHttpException
      * @throws ServerErrorHttpException
+     * @throws UnauthorizedHttpException
      */
     #[NoReturn]
     public function run(): void
@@ -69,8 +72,13 @@ class Rest extends BaseApplication
         $this->dispose($execTime);
     }
 
+    /**
+     * @throws UnauthorizedHttpException
+     */
     protected function beforeInit(): void
     {
+        $this->runAntibots();
+
         HttpHeader::setDefaultHeaders(Rest::$config['origins']);
 
         if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -85,6 +93,29 @@ class Rest extends BaseApplication
         $mUsage = Utilities::filesize(memory_get_usage(true));
 
         self::$logger->notice("SCRIPT REAL TIME EXECUTION: {$execTime}s, MEMORY PEAK USAGE: $mPeak, MEMORY USAGE: $mUsage");
+    }
+
+    /**
+     * @throws UnauthorizedHttpException
+     */
+    private function runAntibots(): void
+    {
+        if (!isset(self::$config['blockedIPsFile'])) {
+            return;
+        }
+
+        $visitorIP = Utilities::getIp();
+        $ipFile = APP_ROOT . self::$config['blockedIPsFile'];
+
+        if (Antibots::isIpBlocked($visitorIP, $ipFile) || Antibots::isBot()) {
+            throw new UnauthorizedHttpException('Bot detected for IP blocked.');
+        }
+
+        $pathInfo = trim($_SERVER['PATH_INFO'] ?? '', '/');
+        if ($pathInfo === 'antibots') {
+            Antibots::blockIp($visitorIP, $ipFile);
+            throw new UnauthorizedHttpException('Your IP has been blocked due to suspicious behavior.');
+        }
     }
 
 }

@@ -24,16 +24,10 @@ class AuthorizationToken
             throw new BadRequestHttpException("You must provide a valid token.");
         }
 
-        $returnArray = [
+        return [
             '_id' => $payload->_id,
             '_username' => $payload->_username,
         ];
-
-        if (isset($payload->exp)) {
-            $returnArray['exp'] = $payload->exp;
-        }
-
-        return $returnArray;
     }
 
     /**
@@ -66,10 +60,18 @@ class AuthorizationToken
 
     public static function createToken(array $data): string
     {
-        return JWT::encode([
+        $exp = time() + 3600 * 24 * 30;
+
+        $payloadArray = [
             '_id' => $data['id'],
             '_username' =>  $data['username'],
-        ], BaseApplication::$config['jwtSecretKey'], 'HS256');
+        ];
+
+        if (isset($exp)) {
+            $payloadArray['exp'] = $exp;
+        }
+
+        return JWT::encode($payloadArray, BaseApplication::$config['jwtSecretKey'], 'HS256');
     }
 
     /**
