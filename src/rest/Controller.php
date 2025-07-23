@@ -9,6 +9,7 @@ use SimpleApiRest\attributes\RateLimit;
 use SimpleApiRest\exceptions\BadRequestHttpException;
 use SimpleApiRest\exceptions\ForbiddenHttpException;
 use SimpleApiRest\exceptions\TooManyRequestsHttpException;
+use SimpleApiRest\exceptions\UnauthorizedHttpException;
 use SimpleApiRest\validators\RateLimitChecker;
 
 abstract class Controller
@@ -24,7 +25,6 @@ abstract class Controller
     }
 
     /**
-     * @throws BadRequestHttpException
      * @throws TooManyRequestsHttpException
      * @throws ForbiddenHttpException
      */
@@ -33,8 +33,13 @@ abstract class Controller
         // 1 Rate Limiting
         $rateLimitAttr = $method->getAttributes(RateLimit::class)[0] ?? null;
         if ($rateLimitAttr) {
+            $class = explode('\\', $method->class);
+            $className = array_pop($class);
+
+            unset($class);
+
             $rateLimit = $rateLimitAttr->newInstance();
-            RateLimitChecker::check($method->name, $rateLimit->limit, $rateLimit->seconds);
+            RateLimitChecker::check("{$className}_$method->name", $rateLimit->limit, $rateLimit->seconds);
         }
 
         // 4. Validate permissions
@@ -43,44 +48,19 @@ abstract class Controller
             $permissions = array_merge($permissions, $attr->newInstance()->permissions);
         }
 
-        if (!empty($permissions) && !$this->checkSpecialPermissions($permissions) && !AuthorizationToken::userHasAccess($permissions)) {
+        if (!empty($permissions) && !$this->checkSpecialPermissions($permissions)) {
             throw new ForbiddenHttpException(Rest::t('You do not have permission to access this page.'));
         }
     }
 
-    /**
-     * @throws BadRequestHttpException
-     */
-    protected function checkSpecialPermissions(array $permissions): bool
-    {
-        if (in_array('*', $permissions)) {
-            return true;
-        }
-
-        if (in_array('?', $permissions)) {
-            $headers = array_change_key_case(getallheaders());
-
-            if (!isset($headers['authorization'])) {
-                return true;
-            }
-        }
-
-        if (in_array('@', $permissions)) {
-            $token = AuthorizationToken::dataToken();
-
-            if (!empty($token)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
+    abstract protected function checkSpecialPermissions(array $permissions): bool;
 
     /**
      * @throws BadRequestHttpException
      * @throws TooManyRequestsHttpException
      * @throws ReflectionException
      * @throws ForbiddenHttpException
+     * @throws UnauthorizedHttpException
      */
     public function createAction(string $methodName, array $params = []): array
     {
