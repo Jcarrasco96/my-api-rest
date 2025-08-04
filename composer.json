@@ -2,7 +2,7 @@
   "name": "jcarrasco96/simple-api-rest",
   "description": "PHP library for creating secure and simple REST APIs.",
   "type": "library",
-  "version": "1.0.8-dev",
+  "version": "1.0.9-dev",
   "license": "AGPL-3.0-or-later",
   "keywords": ["rest", "api", "php", "jwt", "framework"],
   "autoload": {
@@ -23,6 +23,6 @@
     "ext-mbstring": "*",
     "ext-openssl": "*",
     "ext-pdo": "*",
-    "firebase/php-jwt": "^v6.10.0"
+    "phpmailer/phpmailer": "^6.10"
   }
 }

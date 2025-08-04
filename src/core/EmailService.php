@@ -18,13 +18,14 @@ class EmailService
         $mailConfig = BaseApplication::$config['mail'];
 
         $this->mailer = new PHPMailer(true);
-        $this->mailer->isSMTP();
         $this->mailer->Host = $mailConfig['host'];
         $this->mailer->SMTPAuth = true;
         $this->mailer->Username = $mailConfig['username'];
         $this->mailer->Password = $mailConfig['password'];
         $this->mailer->SMTPSecure = $mailConfig['encryption'];
         $this->mailer->Port = $mailConfig['port'];
+        $this->mailer->SMTPOptions = $mailConfig['options'] ?? [];
+        $this->mailer->isSMTP();
         $this->mailer->setFrom($mailConfig['username'], 'SimpleApiRest');
     }
 

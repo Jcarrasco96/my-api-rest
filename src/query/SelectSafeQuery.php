@@ -4,7 +4,6 @@ namespace SimpleApiRest\query;
 
 use InvalidArgumentException;
 use PDO;
-use SimpleApiRest\core\BaseApplication;
 
 class SelectSafeQuery extends SafeQuery
 {
@@ -60,32 +59,7 @@ class SelectSafeQuery extends SafeQuery
 
     public function execute(): string|int|array|false
     {
-        $this->validateTable();
-        $this->validateData();
-
-        $sql = 'SELECT ';
-        $sql .= $this->data === ['*']
-            ? '*'
-            : implode(', ', array_map(fn($col) => "`$col`", $this->data));
-        $sql .= " FROM `$this->table`";
-
-        if ($this->where) {
-            $sql .= " WHERE " . implode(" AND ", $this->where);
-        }
-        if (!empty($this->groupBy)) {
-            $sql .= " GROUP BY " . implode(', ', $this->groupBy);
-        }
-        if (!empty($this->orderBy)) {
-            $sql .= " ORDER BY " . implode(', ', $this->orderBy);
-        }
-        if ($this->limit !== null) {
-            $sql .= " LIMIT :__limit";
-            $this->params[':__limit'] = $this->limit;
-        }
-        if ($this->offset !== null) {
-            $sql .= " OFFSET :__offset";
-            $this->params[':__offset'] = $this->offset;
-        }
+        $sql = $this->getSql();
 
         $stmt = $this->pdo->prepare($sql);
 
@@ -168,6 +142,23 @@ class SelectSafeQuery extends SafeQuery
 
     public function prepareSQL(bool $bindParams = false): string
     {
+        $sql = $this->getSql();
+
+        if ($bindParams) {
+            foreach ($this->params as $key => $val) {
+                if (in_array($key, [':__offset', ':__limit'])) {
+                    $sql = str_replace($key, $val, $sql);
+                } else {
+                    $sql = str_replace($key, '"$val"', $sql);
+                }
+            }
+        }
+
+        return $sql;
+    }
+
+    private function getSql(): string
+    {
         $this->validateTable();
         $this->validateData();
 
@@ -194,17 +185,6 @@ class SelectSafeQuery extends SafeQuery
             $sql .= " OFFSET :__offset";
             $this->params[':__offset'] = $this->offset;
         }
-
-        if ($bindParams) {
-            foreach ($this->params as $key => $val) {
-                if (in_array($key, [':__offset', ':__limit'])) {
-                    $sql = str_replace($key, $val, $sql);
-                } else {
-                    $sql = str_replace($key, '"$val"', $sql);
-                }
-            }
-        }
-
         return $sql;
     }
 
