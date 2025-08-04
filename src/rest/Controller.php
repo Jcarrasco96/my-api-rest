@@ -60,7 +60,6 @@ abstract class Controller
      * @throws TooManyRequestsHttpException
      * @throws ReflectionException
      * @throws ForbiddenHttpException
-     * @throws UnauthorizedHttpException
      */
     public function createAction(string $methodName, array $params = []): array
     {

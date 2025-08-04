@@ -19,7 +19,6 @@ return [
     'controllerNamespace' => '{{controllerNamespace}}',
     'modelNamespace' => '{{modelNamespace}}',
     'repositoryNamespace' => '{{repositoryNamespace}}',
-    'userModel' => '{{userModel}}',
 
     'mail' => [
         'host' => 'smtp.gmail.com',

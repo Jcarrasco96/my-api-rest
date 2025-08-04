@@ -11,7 +11,7 @@ This project is a RESTful microframework written in **pure PHP**, designed for d
 ✅ Versioned Controllers  
 ✅ Dynamic Routing  
 ✅ Custom Attributes  
-✅ Permission Checking and JWT Tokens  
+✅ Permission Checking and JWT  
 ✅ Request Limiting  
 ✅ Layer Separation  
 ✅ No External Dependencies
@@ -24,20 +24,21 @@ This project is a RESTful microframework written in **pure PHP**, designed for d
 /db/
 /exceptions/
 /languages/
-/models/
 /query/
 /rest/
 /validators/
 composer.json
+LICENSE.md
+README.md (this file)
 ```
 
 ## 🔧 Requirements
-✅ PHP >=8.1  
+✅ PHP >=8.2  
 ✅ Apache or Nginx server (friendly URLs)  
 ✅ PDO extension enabled  
-✅ File system access (for rate limiting)  
+✅ File system access (for logs and rate limiting)  
 
-## ⚙️ Example of use
+## ⚙️ Example of use of Rate Limit Checker
 ```php
 #[RateLimit(limit: 10, seconds: 60)]
 #[Route('auth/login', [Route::ROUTER_POST])]
@@ -53,7 +54,7 @@ GET  /v1/user
 POST /v1/user
 GET  /v1/product/5
 ```
-The URL automatically determines the controller (UserController) and method (actionIndex, actionCreate, etc.).
+The URL automatically determines the controller and method.
 
 ## 📥 Installation
 1. Clone this repository

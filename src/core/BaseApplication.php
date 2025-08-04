@@ -9,7 +9,7 @@ abstract class BaseApplication
 
     public static array $config = [
         'name' => 'SimpleApiRestApp',
-        'version' => '1.0.8-dev',
+        'version' => '1.0.9-dev',
         'language' => 'en',
         'timezone' => 'America/Havana',
     ];
@@ -64,13 +64,12 @@ abstract class BaseApplication
         if (empty(self::$config['jwtSecretKey'])) {
             throw new BadRequestHttpException('JWT Secret Key is missing');
         }
-        if (empty(self::$config['userModel'])) {
-            throw new BadRequestHttpException('User Model is missing');
-        }
 
         date_default_timezone_set(self::$config['timezone']);
 
-        self::$language = new Language(self::$config['language']);
+        $detectLanguage = $this->detectLanguageCode();
+
+        self::$language = new Language($detectLanguage);
     }
 
     abstract protected function beforeInit(): void;
@@ -80,6 +79,30 @@ abstract class BaseApplication
     public static function t(string $key, array $params = []): string
     {
         return self::$language->t($key, $params);
+    }
+
+    private function detectLanguageCode(): string {
+        $default = 'en';
+        $supported = ['en', 'es'];
+
+        if (!function_exists('getallheaders')) {
+            return $default;
+        }
+
+        $headers = array_change_key_case(getallheaders());
+
+        if (!empty($headers['accept-language'])) {
+            $lang = strtolower(substr($headers['accept-language'], 0, 2));
+            if (in_array($lang, $supported)) {
+                return $lang;
+            }
+        }
+
+        if (!empty($_GET['lang']) && in_array($_GET['lang'], $supported)) {
+            return $_GET['lang'];
+        }
+
+        return $default;
     }
 
 }

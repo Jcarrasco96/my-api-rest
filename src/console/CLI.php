@@ -2,10 +2,12 @@
 
 namespace SimpleApiRest\console;
 
+use JetBrains\PhpStorm\ExpectedValues;
 use Ramsey\Uuid\Uuid;
 use SimpleApiRest\core\BaseApplication;
 use SimpleApiRest\core\Utilities;
 use SimpleApiRest\exceptions\ServerErrorHttpException;
+use Throwable;
 
 class CLI extends BaseApplication
 {
@@ -30,6 +32,75 @@ class CLI extends BaseApplication
             exit(0);
         }
 
+        $this->execute($command, $file, $argv);
+
+        $execTime = number_format(microtime(true) - $this->time_start, 5);
+
+        $this->dispose($execTime);
+    }
+
+    protected function dispose(float $execTime): void
+    {
+        $mPeak = Utilities::filesize(memory_get_peak_usage(true));
+        $mUsage = Utilities::filesize(memory_get_usage(true));
+
+        self::$logger->notice("CONSOLE SCRIPT REAL TIME EXECUTION: {$execTime}s, MEMORY PEAK USAGE: $mPeak, MEMORY USAGE: $mUsage");
+
+        echo PHP_EOL . "REAL TIME EXECUTION: " . self::clog($execTime . " seconds", 'c') . PHP_EOL;
+        echo "MEMORY PEAK USAGE: " . self::clog($mPeak, 'c') . PHP_EOL;
+        echo "MEMORY USAGE: " . self::clog($mUsage, 'c') . PHP_EOL .  PHP_EOL;
+    }
+
+    protected function beforeInit(): void
+    {
+        if (php_sapi_name() !== 'cli') {
+            echo self::clog("This script can only be run using CLI.", 'r') . PHP_EOL;
+            exit(1);
+        }
+
+        echo self::clog("INIT CONSOLE APP (SimpleApiRest)", 'c') . PHP_EOL;
+    }
+
+    private function showHelp(string $file): void
+    {
+        echo 'Usage:' . PHP_EOL;
+        echo PHP_TAB . 'php ' . self::clog($file, 'y') . " " . self::clog('g|generate m|models', 'g') . PHP_EOL;
+        echo PHP_TAB . 'php ' . self::clog($file, 'y') . " " . self::clog('g|generate c|controllers', 'g') . PHP_EOL;
+        echo PHP_TAB . 'php ' . self::clog($file, 'y') . " " . self::clog('g|generate r|repositories', 'g') . PHP_EOL;
+        echo PHP_TAB . 'php ' . self::clog($file, 'y') . " " . self::clog('serve', 'g') . " (will serve in " . self::clog('http://localhost:8080', 'c') . ")" . PHP_EOL;
+        echo PHP_EOL;
+    }
+
+    public static function clog(
+        string $str,
+        #[ExpectedValues(['r', 'g', 'y', 'b', 'm', 'c', 'w'])]
+        string $type = 'w'
+    ): string
+    {
+        $colors = [
+            'r' => 91,
+            'g' => 92,
+            'y' => 93,
+            'b' => 94,
+            'm' => 95,
+            'c' => 96,
+            'w' => 97,
+        ];
+        return "\033[" . ($colors[$type] ?? 0) . "m" . $str . "\033[0m";
+    }
+
+    private function read(string $input, mixed $default = '', bool $required = false): string
+    {
+        do {
+            echo $input;
+            $value = trim(fgets(STDIN)) ?: $default;
+        } while ($required && empty($value));
+
+        return $value;
+    }
+
+    public function execute(string $command, string $file, array $argv): void
+    {
         switch ($command) {
             case 'g':
             case 'generate':
@@ -101,18 +172,16 @@ class CLI extends BaseApplication
                     '{{controllerNamespace}}',
                     '{{modelNamespace}}',
                     '{{repositoryNamespace}}',
-                    '\'{{userModel}}\'',
                 ],
-                [
-                    Uuid::uuid4()->toString(),
-                    'mysql',
-                    $host, $port, $username, $password, $db_name,
-                    $baseNamespace . '\\\\controllers',
-                    $baseNamespace . '\\\\models',
-                    $baseNamespace . '\\\\repository',
-                    $baseNamespace . '\\models\\User::class',
-                ],
-                $example);
+                    [
+                        Uuid::uuid4()->toString(),
+                        'mysql',
+                        $host, $port, $username, $password, $db_name,
+                        $baseNamespace . '\\\\controllers',
+                        $baseNamespace . '\\\\models',
+                        $baseNamespace . '\\\\repository',
+                    ],
+                    $example);
 
                 file_put_contents(__DIR__ . '/_config.php', $exampleOK);
                 break;
@@ -131,66 +200,33 @@ class CLI extends BaseApplication
                 }
                 break;
         }
+    }
+
+    public function execTasks(array $taskClasses): void
+    {
+        $this->beforeInit();
+
+        foreach ($taskClasses as $taskClass) {
+            $task = new $taskClass();
+
+            echo "[" . date('Y-m-d H:i:s') . "] Running $task->name" . PHP_EOL;
+
+            ob_start();
+
+            try {
+                $task->run();
+            } catch (Throwable $e) {
+                $task->handleError($e);
+            }
+
+            $output = ob_get_clean();
+
+            echo self::clog($output, 'm');
+        }
 
         $execTime = number_format(microtime(true) - $this->time_start, 5);
 
         $this->dispose($execTime);
-    }
-
-    protected function dispose(float $execTime): void
-    {
-        $mPeak = Utilities::filesize(memory_get_peak_usage(true));
-        $mUsage = Utilities::filesize(memory_get_usage(true));
-
-        self::$logger->notice("CONSOLE SCRIPT REAL TIME EXECUTION: {$execTime}s, MEMORY PEAK USAGE: $mPeak, MEMORY USAGE: $mUsage");
-
-        echo PHP_EOL . "REAL TIME EXECUTION: " . self::clog($execTime . " seconds", 'c') . PHP_EOL;
-        echo "MEMORY PEAK USAGE: " . self::clog($mPeak, 'c') . PHP_EOL;
-        echo "MEMORY USAGE: " . self::clog($mUsage, 'c') . PHP_EOL .  PHP_EOL;
-    }
-
-    protected function beforeInit(): void
-    {
-        if (php_sapi_name() !== 'cli') {
-            echo self::clog("Este script solo se puede ejecutar por consola.", 'r') . PHP_EOL;
-            exit(1);
-        }
-
-        echo self::clog("INIT CONSOLE APP (SimpleApiRest)", 'c') . PHP_EOL;
-    }
-
-    private function showHelp(string $file): void
-    {
-        echo 'Usage:' . PHP_EOL;
-        echo PHP_TAB . 'php ' . self::clog($file, 'y') . " " . self::clog('g|generate m|models', 'g') . PHP_EOL;
-        echo PHP_TAB . 'php ' . self::clog($file, 'y') . " " . self::clog('g|generate c|controllers', 'g') . PHP_EOL;
-        echo PHP_TAB . 'php ' . self::clog($file, 'y') . " " . self::clog('g|generate r|repositories', 'g') . PHP_EOL;
-        echo PHP_TAB . 'php ' . self::clog($file, 'y') . " " . self::clog('serve', 'g') . " (will serve in " . self::clog('http://localhost:8080', 'c') . ")" . PHP_EOL;
-        echo PHP_EOL;
-    }
-
-    public static function clog(string $str, string $type = 'w'): string
-    {
-        $colors = [
-            'r' => 91,
-            'g' => 92,
-            'y' => 93,
-            'b' => 94,
-            'm' => 95,
-            'c' => 96,
-            'w' => 97,
-        ];
-        return "\033[" . ($colors[$type] ?? 0) . "m" . $str . "\033[0m";
-    }
-
-    private function read(string $input, mixed $default = '', bool $required = false): string
-    {
-        do {
-            echo $input;
-            $value = trim(fgets(STDIN)) ?: $default;
-        } while ($required && empty($value));
-
-        return $value;
     }
 
 }

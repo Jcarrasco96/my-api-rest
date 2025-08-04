@@ -25,7 +25,6 @@ class RateLimitChecker
         }
 
         $data = json_decode(file_get_contents($path), true);
-        //$now = time();
 
         if ($now - $data['timestamp'] > $seconds) {
             file_put_contents($path, json_encode(['count' => 1, 'timestamp' => $now]));

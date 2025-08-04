@@ -17,7 +17,7 @@ class ExceptionHandler
             header('HTTP/1.1 503 Service Unavailable');
         }
 
-        $code = $th->getCode() == 0 || !is_int($th->getCode()) ? 401 : $th->getCode();
+        $code = $th->getCode() == 0 || !is_int($th->getCode()) ? 500 : $th->getCode();
 
         $data = [
             'message' => $th->getMessage(),

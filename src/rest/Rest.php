@@ -77,9 +77,14 @@ class Rest extends BaseApplication
      */
     protected function beforeInit(): void
     {
+        if (!str_contains(php_sapi_name(), 'apache')) {
+            echo "This script can only be run using Apache." . PHP_EOL;
+            exit(1);
+        }
+
         $this->runAntibots();
 
-        HttpHeader::setDefaultHeaders(Rest::$config['origins']);
+        HttpHeader::setDefaultHeaders(self::$config['origins']);
 
         if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
             http_response_code(204);
