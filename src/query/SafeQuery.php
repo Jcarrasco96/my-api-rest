@@ -4,22 +4,17 @@ namespace SimpleApiRest\query;
 
 use InvalidArgumentException;
 use PDO;
+use PDOStatement;
 use RuntimeException;
 use SimpleApiRest\db\Database;
 
 abstract class SafeQuery
 {
 
-    protected PDO $pdo;
     protected string $table = '';
     protected array $where = [];
     protected array $params = [];
     protected array $data = [];
-
-    public function __construct()
-    {
-        $this->pdo = Database::load();
-    }
 
     public function data(array $data): self
     {
@@ -119,7 +114,7 @@ abstract class SafeQuery
         return $this;
     }
 
-    abstract public function execute(): string|int|array|false;
+    abstract public function execute(): string|int|array|bool;
 
     protected function validateIdentifier(string $name): void
     {
@@ -147,6 +142,23 @@ abstract class SafeQuery
         if (empty($this->data)) {
             throw new RuntimeException("DATA or SELECT cannot be empty.");
         }
+    }
+
+    public function prepare(string $sql): false|PDOStatement
+    {
+        $pdo = Database::load();
+
+        $stmt = $pdo->prepare($sql);
+
+        foreach ($this->params as $key => $val) {
+            if (in_array($key, [':__offset', ':__limit'])) {
+                $stmt->bindValue($key, $val, PDO::PARAM_INT);
+            } else {
+                $stmt->bindValue($key, $val);
+            }
+        }
+
+        return $stmt;
     }
 
 }

@@ -92,14 +92,6 @@ class Rest extends BaseApplication
         }
     }
 
-    protected function dispose(float $execTime): void
-    {
-        $mPeak = Utilities::filesize(memory_get_peak_usage(true));
-        $mUsage = Utilities::filesize(memory_get_usage(true));
-
-        self::$logger->notice("SCRIPT REAL TIME EXECUTION: {$execTime}s, MEMORY PEAK USAGE: $mPeak, MEMORY USAGE: $mUsage");
-    }
-
     /**
      * @throws UnauthorizedHttpException
      */

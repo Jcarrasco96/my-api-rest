@@ -5,7 +5,6 @@ namespace SimpleApiRest\console;
 use JetBrains\PhpStorm\ExpectedValues;
 use Ramsey\Uuid\Uuid;
 use SimpleApiRest\core\BaseApplication;
-use SimpleApiRest\core\Utilities;
 use SimpleApiRest\exceptions\ServerErrorHttpException;
 use Throwable;
 
@@ -37,18 +36,6 @@ class CLI extends BaseApplication
         $execTime = number_format(microtime(true) - $this->time_start, 5);
 
         $this->dispose($execTime);
-    }
-
-    protected function dispose(float $execTime): void
-    {
-        $mPeak = Utilities::filesize(memory_get_peak_usage(true));
-        $mUsage = Utilities::filesize(memory_get_usage(true));
-
-        self::$logger->notice("CONSOLE SCRIPT REAL TIME EXECUTION: {$execTime}s, MEMORY PEAK USAGE: $mPeak, MEMORY USAGE: $mUsage");
-
-        echo PHP_EOL . "REAL TIME EXECUTION: " . self::clog($execTime . " seconds", 'c') . PHP_EOL;
-        echo "MEMORY PEAK USAGE: " . self::clog($mPeak, 'c') . PHP_EOL;
-        echo "MEMORY USAGE: " . self::clog($mUsage, 'c') . PHP_EOL .  PHP_EOL;
     }
 
     protected function beforeInit(): void

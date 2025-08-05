@@ -34,10 +34,12 @@ class EmailService
      */
     public function sendEmail(string $to, string $subject, string $body): bool
     {
+        $this->mailer->clearAddresses();
         $this->mailer->addAddress($to);
         $this->mailer->isHTML();
         $this->mailer->Subject = $subject;
         $this->mailer->Body = $body;
+
         return $this->mailer->send();
     }
 

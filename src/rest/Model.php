@@ -2,7 +2,6 @@
 
 namespace SimpleApiRest\rest;
 
-use SimpleApiRest\exceptions\BadRequestHttpException;
 use SimpleApiRest\exceptions\NotFoundHttpException;
 
 abstract class Model

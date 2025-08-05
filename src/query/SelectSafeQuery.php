@@ -57,19 +57,11 @@ class SelectSafeQuery extends SafeQuery
         return $this;
     }
 
-    public function execute(): string|int|array|false
+    public function execute(): array
     {
         $sql = $this->getSql();
 
-        $stmt = $this->pdo->prepare($sql);
-
-        foreach ($this->params as $key => $val) {
-            if (in_array($key, [':__offset', ':__limit'])) {
-                $stmt->bindValue($key, $val, PDO::PARAM_INT);
-            } else {
-                $stmt->bindValue($key, $val);
-            }
-        }
+        $stmt = $this->prepare($sql);
 
         $stmt->execute();
 
@@ -118,7 +110,7 @@ class SelectSafeQuery extends SafeQuery
 
         $sql .= ' LIMIT 1';
 
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->prepare($sql);
         $stmt->execute($this->params);
 
         return (bool) $stmt->fetchColumn();
@@ -134,7 +126,7 @@ class SelectSafeQuery extends SafeQuery
             $sql .= ' WHERE ' . implode(' AND ', $this->where);
         }
 
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->prepare($sql);
         $stmt->execute($this->params);
 
         return (int) $stmt->fetchColumn();
@@ -149,7 +141,7 @@ class SelectSafeQuery extends SafeQuery
                 if (in_array($key, [':__offset', ':__limit'])) {
                     $sql = str_replace($key, $val, $sql);
                 } else {
-                    $sql = str_replace($key, '"$val"', $sql);
+                    $sql = str_replace($key, "'$val'", $sql);
                 }
             }
         }
@@ -163,9 +155,7 @@ class SelectSafeQuery extends SafeQuery
         $this->validateData();
 
         $sql = 'SELECT ';
-        $sql .= $this->data === ['*']
-            ? '*'
-            : implode(', ', array_map(fn($col) => "`$col`", $this->data));
+        $sql .= $this->data === ['*'] ? '*' : implode(', ', array_map(fn($col) => "`$col`", $this->data));
         $sql .= " FROM `$this->table`";
 
         if ($this->where) {

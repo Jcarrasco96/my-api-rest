@@ -2,9 +2,7 @@
 
 return [
     'jwtSecretKey' => '{{jwtSecretKey}}',
-    'origins' => [
-        '*'
-    ],
+    'origins' => ['*'],
     'db' => [
         'driver' => '{{driver}}',
         '{{driver}}' => [
@@ -19,12 +17,27 @@ return [
     'controllerNamespace' => '{{controllerNamespace}}',
     'modelNamespace' => '{{modelNamespace}}',
     'repositoryNamespace' => '{{repositoryNamespace}}',
-
+    'blockedIPsFile' => 'blocked_ips.txt',
     'mail' => [
         'host' => 'smtp.gmail.com',
         'username' => 'usuario@gmail.com',
         'password' => '{{mail_password}}',
-        'port' => 587,
         'encryption' => 'tls',
+        'port' => 587,
+        'options' => [
+            'ssl' => [
+                'verify_peer' => false,
+                'verify_peer_name' => false,
+                'allow_self_signed' => true
+            ],
+            'tls' => [
+                'verify_peer' => false,
+                'verify_peer_name' => false,
+                'allow_self_signed' => true
+            ]
+        ]
     ],
+    'params' => [
+        'supportEmail' => 'support@shortenit.com'
+    ]
 ];

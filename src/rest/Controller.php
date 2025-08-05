@@ -9,7 +9,6 @@ use SimpleApiRest\attributes\RateLimit;
 use SimpleApiRest\exceptions\BadRequestHttpException;
 use SimpleApiRest\exceptions\ForbiddenHttpException;
 use SimpleApiRest\exceptions\TooManyRequestsHttpException;
-use SimpleApiRest\exceptions\UnauthorizedHttpException;
 use SimpleApiRest\validators\RateLimitChecker;
 
 abstract class Controller
@@ -63,18 +62,18 @@ abstract class Controller
      */
     public function createAction(string $methodName, array $params = []): array
     {
-        if (method_exists($this, $methodName)) {
-            $method = new ReflectionMethod($this, $methodName);
+        if (!method_exists($this, $methodName)) {
+            throw new BadRequestHttpException(Rest::t('The requested method does not exist.'));
+        }
 
-            if ($method->isPublic()) {
-                $this->beforeAction($method);
-                return $method->invokeArgs($this, $params);
-            }
+        $method = new ReflectionMethod($this, $methodName);
 
+        if (!$method->isPublic()) {
             throw new BadRequestHttpException(Rest::t('The requested method must be public.'));
         }
 
-        throw new BadRequestHttpException(Rest::t('The requested method does not exist.'));
+        $this->beforeAction($method);
+        return $method->invokeArgs($this, $params);
     }
 
 }

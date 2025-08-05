@@ -5,19 +5,17 @@ namespace SimpleApiRest\query;
 class DeleteSafeQuery extends SafeQuery
 {
 
-    public function execute(): string|int|array|false
+    public function execute(): int
     {
         $this->validateTable();
         $this->validateWhere();
 
         $sql = "DELETE FROM `$this->table` WHERE " . implode(" AND ", $this->where);
-        $stmt = $this->pdo->prepare($sql);
 
-        foreach ($this->params as $key => $val) {
-            $stmt->bindValue($key, $val);
-        }
+        $stmt = $this->prepare($sql);
 
         $stmt->execute();
+
         return $stmt->rowCount();
     }
 

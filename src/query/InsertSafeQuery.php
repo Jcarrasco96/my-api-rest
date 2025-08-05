@@ -5,7 +5,7 @@ namespace SimpleApiRest\query;
 class InsertSafeQuery extends SafeQuery
 {
 
-    public function execute(): false|int|array|string
+    public function execute(): bool
     {
         $this->validateTable();
         $this->validateData();
@@ -17,12 +17,10 @@ class InsertSafeQuery extends SafeQuery
             $params[] = $param;
             $this->params[$param] = $this->data[$col];
         }
+
         $sql = "INSERT INTO `$this->table` (" . implode(", ", array_map(fn($c) => "`$c`", $columns)) . ") VALUES (" . implode(", ", $params) . ")";
 
-        $stmt = $this->pdo->prepare($sql);
-        foreach ($this->params as $key => $val) {
-            $stmt->bindValue($key, $val);
-        }
+        $stmt = $this->prepare($sql);
 
         return $stmt->execute();
     }

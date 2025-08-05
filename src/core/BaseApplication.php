@@ -9,7 +9,7 @@ abstract class BaseApplication
 
     public static array $config = [
         'name' => 'SimpleApiRestApp',
-        'version' => '1.0.9-dev',
+        'version' => '1.0.10-dev',
         'language' => 'en',
         'timezone' => 'America/Havana',
     ];
@@ -74,7 +74,13 @@ abstract class BaseApplication
 
     abstract protected function beforeInit(): void;
 
-    abstract protected function dispose(float $execTime): void;
+    protected function dispose(float $execTime): void
+    {
+        $mPeak = Utilities::filesize(memory_get_peak_usage(true));
+        $mUsage = Utilities::filesize(memory_get_usage(true));
+
+        self::$logger->notice("SCRIPT REAL TIME EXECUTION: {$execTime}s, MEMORY PEAK USAGE: $mPeak, MEMORY USAGE: $mUsage");
+    }
 
     public static function t(string $key, array $params = []): string
     {

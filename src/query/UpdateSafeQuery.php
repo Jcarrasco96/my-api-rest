@@ -5,7 +5,7 @@ namespace SimpleApiRest\query;
 class UpdateSafeQuery extends SafeQuery
 {
 
-    public function execute(): string|int|array|false
+    public function execute(): int
     {
         $this->validateTable();
         $this->validateWhere();
@@ -19,10 +19,7 @@ class UpdateSafeQuery extends SafeQuery
         }
         $sql = "UPDATE `$this->table` SET " . implode(", ", $sets) . " WHERE " . implode(" AND ", $this->where);
 
-        $stmt = $this->pdo->prepare($sql);
-        foreach ($this->params as $key => $val) {
-            $stmt->bindValue($key, $val);
-        }
+        $stmt = $this->prepare($sql);
 
         $stmt->execute();
 
